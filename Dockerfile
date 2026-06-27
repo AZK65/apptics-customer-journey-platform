@@ -1,5 +1,6 @@
 # Customer Journey Platform — app + WhatsApp/Telegram workers in one container.
-FROM node:20-slim
+# Node 22 (pnpm 11.9 requires >= 22.13).
+FROM node:22-slim
 
 # Chromium + fonts for headless WhatsApp Web (whatsapp-web.js / Puppeteer).
 RUN apt-get update && apt-get install -y \
