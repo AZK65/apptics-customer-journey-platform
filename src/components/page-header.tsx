@@ -1,3 +1,5 @@
+import { ConnectionStatus } from "@/components/connection-status";
+
 export function PageHeader({
   title,
   subtitle,
@@ -15,7 +17,10 @@ export function PageHeader({
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
-      {children && <div className="flex items-center gap-2">{children}</div>}
+      <div className="flex items-center gap-2">
+        {children}
+        <ConnectionStatus />
+      </div>
     </div>
   );
 }
