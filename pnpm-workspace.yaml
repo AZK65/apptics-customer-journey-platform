@@ -1,0 +1,7 @@
+allowBuilds:
+  bufferutil: false
+  es5-ext: false
+  puppeteer: true
+  sharp: true
+  unrs-resolver: true
+  utf-8-validate: false

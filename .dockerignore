@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env.local
+.env*.local
+# Local worker state — production uses the mounted /data volume
+whatsapp-worker/.wwebjs-auth
+whatsapp-worker/store.json
+telegram-worker/store.json
+data
+.lazyweb
+*.log
+.DS_Store

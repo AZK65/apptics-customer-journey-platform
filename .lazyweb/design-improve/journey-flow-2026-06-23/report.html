@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design Improvement — Journey Flow (Sankey)</title>
+<style>
+  :root { --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bg:#fafafa; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); line-height: 1.6; margin: 0; background: var(--bg); }
+  main { max-width: 900px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 22px; margin: 48px 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 18px; margin: 28px 0 8px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--muted); margin-top: 0; }
+  .tldr { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 24px 0; }
+  .tldr strong { color: #1d4ed8; }
+  img { max-width: 100%; border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.06); margin: 10px 0; }
+  figure { margin: 16px 0; }
+  figcaption { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .tag { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: #f1f5f9; color: #475569; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.45; }
+  .idea { border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; margin: 18px 0; background: #fff; }
+  .idea h3 { margin-top: 0; }
+  .star { color: #f59e0b; }
+  .why { background: #f8fafc; border-left: 3px solid var(--accent); padding: 8px 14px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  ul { margin: 8px 0; padding-left: 22px; }
+  .good li { margin: 6px 0; }
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px){ .gallery { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Design Improvement — Journey Flow</h1>
+  <p class="sub">Apptics Customer Journey Platform · Sankey board · 2026-06-23</p>
+
+  <div class="tldr">
+    <strong>TL;DR:</strong> The Sankey is fighting for space inside a 60%-width column, so the
+    ribbons are cramped and the drop-off story is lost. Give the chart the <strong>full content
+    width</strong>, move the customer drill-down to a <strong>full-width grid below</strong>, and add a
+    thin <strong>KPI strip</strong> on top. This is exactly how Spott, Pipedrive and Figma present
+    pipeline/flow analytics.
+  </div>
+
+  <h2>Current State</h2>
+  <p>The board is split into a 3:2 grid — Sankey on the left, customer list on the right.
+  On a real screen the chart only gets ~55% of the width, so columns collapse, ribbons
+  overlap, and the later stages get pushed off-canvas. The drill-down list is a narrow
+  scroller that wastes the right rail.</p>
+  <pre>
+CURRENT (cramped)
+┌───────────────────────────┬───────────────┐
+│  Sankey (squished, scrolls)│ New Lead · 14 │
+│  ▓▓▓▓ ▓▓▓ ▓▓ ...           │ • Grace Liu   │
+│                            │ • Diego R.    │
+│                            │ • ...(scroll) │
+└───────────────────────────┴───────────────┘
+  </pre>
+
+  <h2>Improvement Ideas</h2>
+
+  <div class="idea">
+    <h3>1. Full-width Sankey + drill-down underneath <span class="star">⭐ highest impact</span></h3>
+    <p>Make the Sankey span the entire content width and grow taller (~520px). Move the
+    selected-stage customer list to a full-width section <em>below</em> the chart, laid out as a
+    responsive 2–3 column grid of customer cards instead of a narrow scroll list.</p>
+    <figure>
+      <img src="references/spott-funnel.png" alt="Spott funnel analytics" />
+      <figcaption>Spott — the funnel owns the full width; supporting time-series sit beside/under it, never squeezing the main viz. <span class="tag">Lazyweb</span></figcaption>
+    </figure>
+    <div class="why"><strong>Why this works:</strong> A flow chart is horizontal by nature — every
+    column you steal makes ribbons thinner and crossings worse. Letting it breathe full-width is
+    the single biggest readability win, and a card grid below uses the reclaimed space better
+    than a 1-wide scroller.</div>
+    <pre>
+TARGET
+┌─────────────────────────────────────────────┐
+│  KPIs:  14 leads · 36% won · $82.5k          │
+├─────────────────────────────────────────────┤
+│  S A N K E Y   (full width, taller)          │
+│  New Lead ▓▓▓▓▓▓▓▓▓▓▓▓▓▓►Booked►GC►Met►Won   │
+│                         └►No-show►Follow-ups │
+├─────────────────────────────────────────────┤
+│  ▸ New Lead · 14            $153,000          │
+│  ┌────────┐ ┌────────┐ ┌────────┐            │
+│  │Grace L.│ │Diego R.│ │Elena R.│  …grid      │
+│  └────────┘ └────────┘ └────────┘            │
+└─────────────────────────────────────────────┘
+    </pre>
+  </div>
+
+  <div class="idea">
+    <h3>2. KPI strip above the flow</h3>
+    <p>Add a thin row of headline metrics (Total Leads, Conversion, Won value, No-shows) above
+    the chart so the board leads with the numbers, then explains them with the flow.</p>
+    <figure>
+      <img src="references/pipedrive-pipeline.png" alt="Pipedrive pipeline analysis" />
+      <figcaption>Pipedrive — pipeline analysis opens with headline metrics, then the breakdown charts. <span class="tag">Lazyweb</span></figcaption>
+    </figure>
+    <div class="why"><strong>Why this works:</strong> Gives an at-a-glance answer before the user
+    has to read the diagram, and fills the top band that currently sits empty under the header.</div>
+  </div>
+
+  <div class="idea">
+    <h3>3. Lead with drop-offs, not just the happy path</h3>
+    <p>Keep the branch nodes (Never Booked, No-show → Follow-ups → Recovering/Lost) visually
+    distinct — muted/red fills, pulled below the spine — so the eye lands on <em>where people
+    fall out</em>, which is the whole point of a flow view.</p>
+    <figure>
+      <img src="references/figma-flow-analytics.png" alt="Figma Flow Analytics multi-path funnel" />
+      <figcaption>Figma "Flow Analytics" — a multi-path flow that makes drop-offs and completion the hero, on a calm full-bleed canvas. <span class="tag">Lazyweb</span></figcaption>
+    </figure>
+    <div class="why"><strong>Why this works:</strong> A Sankey earns its keep by exposing leakage.
+    Color-coding the loss branches turns the chart from "pretty" into "actionable."</div>
+  </div>
+
+  <div class="idea">
+    <h3>4. Treat the drill-down as a panel with context, not a bare list</h3>
+    <p>When a stage is selected, head the section with the stage name, count, and total deal
+    value, then show customer cards with their source + current stage. Clay does this well: the
+    flow visual up top, a metrics-rich rail with names, drop-off gaps and notes.</p>
+    <figure>
+      <img src="references/clay-flow-metrics.png" alt="Clay user flow with metrics rail" />
+      <figcaption>Clay (via Wispr Flow) — a flow sequence paired with a metrics rail: avatars, completion/drop-off, revenue. <span class="tag">Lazyweb</span></figcaption>
+    </figure>
+    <div class="why"><strong>Why this works:</strong> The list stops being a dumb filter result and
+    becomes a briefing on that stage — value at risk, who's stuck, where they came from.</div>
+  </div>
+
+  <h2>What's Working</h2>
+  <ul class="good">
+    <li><strong>The Sankey concept is right</strong> — ribbon-thickness = customer count communicates the funnel instantly.</li>
+    <li><strong>Clean partitions</strong> — parent counts equal the sum of children, so the math is honest and ribbons are exact.</li>
+    <li><strong>Click-to-drill interaction</strong> — selecting a stage to reveal its customers is the correct model; it just needs more room.</li>
+    <li><strong>Themed stage colors</strong> carry across the whole app (badges, board, timeline) — keep that consistency.</li>
+  </ul>
+
+  <h2>All References</h2>
+  <div class="gallery">
+    <figure><img src="references/spott-funnel.png" alt="Spott"><figcaption>Spott — full-width funnel analytics <span class="tag">Lazyweb</span></figcaption></figure>
+    <figure><img src="references/pipedrive-pipeline.png" alt="Pipedrive"><figcaption>Pipedrive — pipeline analysis with KPI header <span class="tag">Lazyweb</span></figcaption></figure>
+    <figure><img src="references/figma-flow-analytics.png" alt="Figma Flow Analytics"><figcaption>Figma Flow Analytics — multi-path drop-off flow <span class="tag">Lazyweb</span></figcaption></figure>
+    <figure><img src="references/clay-flow-metrics.png" alt="Clay flow"><figcaption>Clay / Wispr Flow — flow + metrics rail <span class="tag">Lazyweb</span></figcaption></figure>
+  </div>
+</main>
+</body>
+</html>

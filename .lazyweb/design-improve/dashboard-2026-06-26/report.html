@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Design Improvement — Dashboard</title>
+<style>
+ :root{--ink:#1a1a1a;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;}
+ *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);line-height:1.6;margin:0;background:#fafafa}
+ main{max-width:900px;margin:0 auto;padding:48px 24px 96px}
+ h1{font-size:30px;margin:0 0 4px}h2{font-size:22px;margin:42px 0 12px}h3{font-size:18px;margin:24px 0 8px}
+ .sub{color:var(--muted);margin-top:0}
+ .tldr{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin:24px 0}
+ .tldr strong{color:#1d4ed8}
+ pre{background:#0f172a;color:#e2e8f0;padding:16px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.45}
+ .idea{border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:18px 0;background:#fff}
+ .idea h3{margin-top:0}.star{color:#f59e0b}
+ .why{background:#f8fafc;border-left:3px solid var(--accent);padding:8px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+ ul{margin:8px 0;padding-left:22px}.good li{margin:6px 0}
+ code{background:#f1f5f9;padding:1px 6px;border-radius:5px;font-size:13px}
+</style></head><body><main>
+<h1>Design Improvement — Dashboard</h1>
+<p class="sub">Apptics Customer Journey Platform · 2026-06-26</p>
+
+<div class="tldr"><strong>TL;DR:</strong> Re-skin the Dashboard as a proper analytics view — a borderless big-number KPI row, one hero <strong>area chart with two gradient series</strong> (leads vs won over time), and tidy <strong>breakdown lists with inline bar fills + icons</strong> (sources, stages, ad campaigns, services). Target aesthetic = the user's Framer Analytics page; charts from <code>ui.shadcn.com/charts/area</code> (Recharts).</p>
+
+<h2>Current State</h2>
+<p>The dashboard is functional but "cards-in-a-grid": four bordered KPI tiles, a horizontal-bar funnel, a sources list, an activity feed, and a "recently lost" list. It reads like a CRM table page, not an analytics dashboard. No time-series — you can't see momentum (are leads trending up?).</p>
+
+<h2>Target (provided by user)</h2>
+<p>Framer's <strong>Analytics</strong> page: a clean date-ranged header, a row of large borderless KPIs (Live Visitors, Unique Visitors, Pageviews, Bounce, Avg Session), a big smooth <strong>two-series area chart with purple+blue gradients</strong>, then 2×2 breakdown panels (Sources with favicons + counts, Pages, Geography, Devices) where each row has a subtle proportional bar fill behind it.</p>
+
+<h2>Improvement Ideas</h2>
+
+<div class="idea">
+<h3>1. Hero area chart — leads & won over time <span class="star">⭐ highest impact</span></h3>
+<p>Add the one thing the current dashboard lacks: <strong>trend</strong>. A full-width gradient area chart (shadcn/Recharts) plotting daily <em>New Leads</em> and <em>Won</em> over the selected range, with the same purple/blue gradient fills as the Framer page. A date-range control in the header (Last 7/30/90 days) scopes it.</p>
+<div class="why"><strong>Why:</strong> KPIs answer "how many"; the area chart answers "which way is it going" — the single most useful addition for a sales dashboard, and the centerpiece of the target design.</div>
+<pre>
+Total Leads   Booked   Won   Lost   Win rate
+   70           29      12    27      17%
+┌───────────────────────────────────────────┐
+│            ╱╲   purple = leads             │
+│      ╱╲  ╱   ╲___╱╲   blue = won           │
+│   ╱╲╱  ╲╱          ╲__                     │
+└───────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="idea">
+<h3>2. Borderless big-number KPI row</h3>
+<p>Replace the four bordered tiles with a single borderless row of 5 large numbers (label small + muted above, big bold number below), divided by hairlines — exactly the Framer header. Metrics: Total Leads · Booked · Won · Lost · Win rate.</p>
+<div class="why"><strong>Why:</strong> Removes visual noise (8 card borders), lets the numbers breathe, and matches the target's clean header.</div>
+</div>
+
+<div class="idea">
+<h3>3. Breakdown lists with inline bar fills + icons</h3>
+<p>Turn the plain lists into Framer-style "Sources" panels: each row shows an icon + label on the left, a count on the right, and a subtle proportional <em>bar fill behind the row</em>. Use it for a 2×2 grid: <strong>Sources</strong> (where leads come from), <strong>Stages</strong> (pipeline distribution), <strong>Top Ad Campaigns</strong> (from FB attribution), <strong>Services</strong> requested.</p>
+<div class="why"><strong>Why:</strong> Same information density as today but far more scannable — the bar-behind-row pattern encodes proportion without a separate chart.</div>
+<pre>
+Sources                         Stages
+🌐 Website Form  ▓▓▓▓▓▓▓▓ 62     ● New Lead     ▓▓▓▓▓▓ 43
+𝕏  X / Twitter  ▓ 6              ● Won          ▓▓ 12
+👥 Referral     ▏ 1              ● Lost         ▓▓ 27
+</pre>
+</div>
+
+<div class="idea">
+<h3>4. Quiet, analytics-grade surface</h3>
+<p>Tighten spacing, use muted hairline dividers instead of heavy card borders, and let the chart be the only saturated element (the gradients). Keep the app's light theme for consistency with the other pages, but adopt the analytics <em>layout language</em>.</p>
+</div>
+
+<h2>What's Working</h2>
+<ul class="good">
+<li><strong>The funnel logic is solid</strong> — stage counts reconcile across views; keep the data, restyle the container.</li>
+<li><strong>Source attribution</strong> already exists and maps cleanly to a breakdown panel.</li>
+<li><strong>Recent activity</strong> is genuinely useful — keep it, just quieter.</li>
+<li><strong>Themed stage colors</strong> carry across the app — reuse them as the chart/series palette.</li>
+</ul>
+
+<h2>References</h2>
+<p>Primary: the user-provided <strong>Framer Analytics</strong> page (the north star). Components: <strong>shadcn/ui Area Charts</strong> (ui.shadcn.com/charts/area, Recharts) for the gradient area chart + tooltip. Lazyweb DB was locked (skill pack update needed), so web/DB references were skipped — the provided target is sufficient direction.</p>
+</main></body></html>
