@@ -113,7 +113,18 @@ const scheduleSync = () => {
     client.addEventHandler(scheduleSync, new NewMessage({}));
     setInterval(() => syncAll().catch(() => {}), 120_000);
   } catch (e) {
-    console.error("[tg] connect failed:", e && e.message);
+    const msg = (e && e.message) || String(e);
+    console.error("[tg] connect failed:", msg);
+    if (/AUTH_KEY_DUPLICATED/.test(msg)) {
+      console.error(
+        "[tg] This Telegram session is already in use by another service " +
+          "(e.g. apptics-whatsapp). The journey needs its OWN session — run " +
+          "`pnpm telegram:login`, then set the new TELEGRAM_SESSION. Staying idle.",
+      );
+      writeStore({ status: "session_in_use" });
+      setInterval(() => {}, 1 << 30); // keep alive so the supervisor doesn't crash-loop
+      return;
+    }
     writeStore({ status: "error" });
     process.exit(1);
   }

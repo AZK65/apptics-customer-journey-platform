@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "whatsapp:link": "node whatsapp-worker/sync.js",
-    "telegram:sync": "node --env-file=.env.local telegram-worker/sync.js"
+    "telegram:sync": "node --env-file=.env.local telegram-worker/sync.js",
+    "telegram:login": "node --env-file=.env.local telegram-worker/login.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
