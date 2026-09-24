@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { staggerContainer, staggerItem, fadeIn } from "@/lib/motion";
 import {
   Bot,
   Radar,
@@ -173,7 +175,7 @@ export function BotsManager() {
   return (
     <div className="space-y-6">
       {/* Bot hero card */}
-      <Card>
+      <motion.div {...fadeIn}><Card>
         <CardContent className="flex items-start gap-5">
           <span
             className="flex size-12 shrink-0 items-center justify-center rounded-xl"
@@ -219,7 +221,7 @@ export function BotsManager() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card></motion.div>
 
       {/* Watchers */}
       <div className="flex items-center justify-between">
@@ -235,7 +237,7 @@ export function BotsManager() {
           No watchers configured yet. Add one to get started.
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid gap-4 lg:grid-cols-2">
           {watchers.map((watcher, idx) => {
             const active =
               watcher.chatId && watcher.chatId !== "REPLACE_WITH_CHAT_ID";
@@ -243,7 +245,7 @@ export function BotsManager() {
             const isAddingKeyword = addKeywordIdx === idx;
 
             return (
-              <Card key={idx}>
+              <motion.div key={idx} variants={staggerItem}><Card>
                 <CardContent className="space-y-4">
                   {/* Watcher header */}
                   <div className="flex items-start justify-between">
@@ -406,10 +408,10 @@ export function BotsManager() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card></motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       {/* Add watcher dialog */}

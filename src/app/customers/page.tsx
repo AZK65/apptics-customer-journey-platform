@@ -1,8 +1,8 @@
 import { getCustomers } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
+import { FadeIn } from "@/components/motion-wrappers";
 import { CustomersTable } from "@/components/customers-table";
 
-// Render per-request so live CRM data is always fresh.
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
@@ -14,7 +14,9 @@ export default async function CustomersPage() {
         subtitle={`${customers.length} people tracked end-to-end across every touchpoint.`}
       />
       <div className="p-6">
-        <CustomersTable customers={customers} />
+        <FadeIn>
+          <CustomersTable customers={customers} />
+        </FadeIn>
       </div>
     </div>
   );

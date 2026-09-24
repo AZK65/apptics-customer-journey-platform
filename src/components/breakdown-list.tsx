@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedBar } from "@/components/motion-wrappers";
 
 export interface BreakdownItem {
   key: string;
@@ -42,13 +43,10 @@ export function BreakdownList({
               key={it.key}
               className="relative flex items-center justify-between overflow-hidden rounded-md px-2.5 py-2 text-sm"
             >
-              <span
+              <AnimatedBar
                 className="absolute inset-y-0.5 left-0 rounded-md"
-                style={{
-                  width: `${pct}%`,
-                  backgroundColor: `color-mix(in oklch, ${color} 16%, transparent)`,
-                }}
-                aria-hidden
+                width={`${pct}%`}
+                color={color}
               />
               <span className="relative z-10 flex min-w-0 items-center gap-2">
                 {it.icon ? (

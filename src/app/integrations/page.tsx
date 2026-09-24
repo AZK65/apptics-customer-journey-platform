@@ -13,6 +13,7 @@ import {
   integrationConfig,
 } from "@/lib/integrations/config";
 import { PageHeader } from "@/components/page-header";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion-wrappers";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Render per-request so live CRM status/data is always fresh.
@@ -105,7 +106,7 @@ export default async function IntegrationsPage() {
       />
 
       <div className="space-y-6 p-6">
-        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+        <FadeIn><div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
           {live ? (
             <>
               <span className="font-medium text-foreground">Live mode.</span> At
@@ -132,13 +133,13 @@ export default async function IntegrationsPage() {
               changes — the whole UI stays the same.
             </>
           )}
-        </div>
+        </div></FadeIn>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {integrations.map((it) => {
             const isLive = status[it.key];
             return (
-              <Card key={it.name}>
+              <StaggerItem key={it.name}><Card>
                 <CardContent className="space-y-3">
                   <div className="flex items-start justify-between">
                     <span
@@ -183,10 +184,10 @@ export default async function IntegrationsPage() {
                     </code>
                   </div>
                 </CardContent>
-              </Card>
+              </Card></StaggerItem>
             );
           })}
-        </div>
+        </StaggerContainer>
       </div>
     </div>
   );

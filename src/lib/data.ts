@@ -1,7 +1,8 @@
 import type { Customer } from "./types";
 import { MOCK_CUSTOMERS } from "./mock-data";
-import { anyLiveSource } from "./integrations/config";
+import { anyLiveSource, integrationConfig } from "./integrations/config";
 import { aggregateCustomers } from "./integrations/aggregate";
+import { attachSalesBotMessages } from "./integrations/sales-bot-groups";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data provider seam.
@@ -34,7 +35,17 @@ export async function getCustomer(id: string): Promise<Customer | undefined> {
   // Go through the full aggregation so the detail view includes every source's
   // enrichment (payment onboarding, group conversation, …), not just the CRM.
   const all = await getCustomers();
-  return all.find((c) => c.id === id);
+  const customer = all.find((c) => c.id === id);
+  // Lazily pull the live group conversation for this one customer (too heavy to
+  // do for the whole list on every load).
+  if (customer && integrationConfig.salesBot.enabled && customer.groupChat?.ref) {
+    try {
+      await attachSalesBotMessages(customer);
+    } catch {
+      /* leave the group without messages rather than fail the page */
+    }
+  }
+  return customer;
 }
 
 /** Whether the app is currently serving live data (used by the Integrations page). */

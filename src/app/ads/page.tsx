@@ -4,6 +4,7 @@ import { effectiveStage, formatCurrency } from "@/lib/journey";
 import { integrationConfig } from "@/lib/integrations/config";
 import { fetchAdSpend } from "@/lib/integrations/meta";
 import { PageHeader } from "@/components/page-header";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion-wrappers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -104,19 +105,19 @@ export default async function AdsPage() {
       />
 
       <div className="space-y-6 p-6">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Kpi label="Ad spend" value={totalSpend > 0 ? formatCurrency(totalSpend) : "—"} />
-          <Kpi label="Ads" value={`${ads.length}${activeAds ? ` · ${activeAds} active` : ""}`} />
-          <Kpi label="Attributed leads" value={attributedLeads} />
-          <Kpi
+        <StaggerContainer className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StaggerItem><Kpi label="Ad spend" value={totalSpend > 0 ? formatCurrency(totalSpend) : "—"} /></StaggerItem>
+          <StaggerItem><Kpi label="Ads" value={`${ads.length}${activeAds ? ` · ${activeAds} active` : ""}`} /></StaggerItem>
+          <StaggerItem><Kpi label="Attributed leads" value={attributedLeads} /></StaggerItem>
+          <StaggerItem><Kpi
             label="Cost / lead"
             value={
               totalSpend > 0 && attributedLeads
                 ? formatCurrency(Math.round(totalSpend / attributedLeads))
                 : "—"
             }
-          />
-        </div>
+          /></StaggerItem>
+        </StaggerContainer>
 
         {metaEnabled && attributedLeads === 0 && (
           <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
@@ -128,7 +129,7 @@ export default async function AdsPage() {
           </div>
         )}
 
-        <Card>
+        <FadeIn delay={0.15}><Card>
           <CardHeader>
             <CardTitle>By Ad</CardTitle>
           </CardHeader>
@@ -177,9 +178,9 @@ export default async function AdsPage() {
               </TableBody>
             </Table>
           </CardContent>
-        </Card>
+        </Card></FadeIn>
 
-        {attributedLeads === 0 && <SetupGuide />}
+        {attributedLeads === 0 && <FadeIn delay={0.25}><SetupGuide /></FadeIn>}
       </div>
     </div>
   );

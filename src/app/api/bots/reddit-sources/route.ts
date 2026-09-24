@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const BOT_URL = process.env.X_BOT_URL || "http://localhost:3001";
-const BOT_API_KEY = process.env.X_BOT_API_KEY || "";
+const BOT_URL = process.env.REDDIT_BOT_URL || "http://localhost:3002";
+const BOT_API_KEY = process.env.REDDIT_BOT_API_KEY || "";
 
 function headers() {
   const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -11,7 +11,7 @@ function headers() {
 
 export async function GET() {
   try {
-    const res = await fetch(`${BOT_URL}/api/watchers`, { headers: headers() });
+    const res = await fetch(`${BOT_URL}/api/sources`, { headers: headers() });
     if (!res.ok) throw new Error(`Bot returned ${res.status}`);
     return NextResponse.json(await res.json());
   } catch (e) {
@@ -25,7 +25,7 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const res = await fetch(`${BOT_URL}/api/watchers`, {
+    const res = await fetch(`${BOT_URL}/api/sources`, {
       method: "PUT",
       headers: headers(),
       body: JSON.stringify(body),

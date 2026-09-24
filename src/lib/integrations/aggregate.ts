@@ -3,6 +3,7 @@ import { integrationConfig } from "./config";
 import { fetchCrmCustomers } from "./apptics-crm";
 import { enrichWithWhatsApp } from "./whatsapp";
 import { enrichWithTelegram } from "./telegram";
+import { enrichWithSalesBotGroups } from "./sales-bot-groups";
 import { enrichWithApticsPay } from "./apptics-pay";
 import { fetchAdSpend } from "./meta";
 import { readAdStore, lookupAd } from "./ad-store";
@@ -61,6 +62,14 @@ export async function aggregateCustomers(): Promise<Customer[]> {
   // ── Phase 2b: Telegram groups (attached where no WhatsApp group matched) ─
   if (integrationConfig.telegram.enabled) {
     await enrichWithTelegram(index);
+  }
+
+  // ── Phase 2c: sales-bot groups — read the WhatsApp/Telegram groups the sales
+  // bot actually created (via its own live sessions), so the dashboard shows
+  // real conversations without a second WhatsApp/Telegram connection. Fills any
+  // customer the dashboard's own workers didn't already cover.
+  if (integrationConfig.salesBot.enabled) {
+    await enrichWithSalesBotGroups(index);
   }
 
   // ── Phase 3: apptics-pay (payment onboarding) ────────────────────────────

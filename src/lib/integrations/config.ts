@@ -145,6 +145,25 @@ export const integrationConfig = {
       return !!this.exportUrl && !!this.exportApiKey;
     },
   },
+
+  // ── Sales bot (apptics-whatsapp service) — account linking control plane ─────
+  // The dashboard proxies to the sales bot's own API server-side (so its API_KEY
+  // never reaches the browser) to render live QR panels + re-link controls for
+  // the WhatsApp/Telegram numbers that create groups and send booking notices.
+  salesBot: {
+    get url() {
+      return (
+        env("SALES_BOT_URL") ||
+        "https://apptics-whatsapp-production.up.railway.app"
+      );
+    },
+    get apiKey() {
+      return env("SALES_BOT_API_KEY");
+    },
+    get enabled() {
+      return !!this.url && !!this.apiKey;
+    },
+  },
 };
 
 /** True when at least one live source is configured — switches `data.ts` to live mode. */

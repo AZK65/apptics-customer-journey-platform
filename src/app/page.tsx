@@ -16,6 +16,7 @@ import {
 } from "@/lib/journey";
 import type { LeadSource, ServiceKind, Stage } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
+import { FadeIn, FadeInUp, StaggerContainer, StaggerItem } from "@/components/motion-wrappers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomerAvatar } from "@/components/customer-avatar";
 import { StageBadge } from "@/components/stage-badge";
@@ -158,19 +159,19 @@ export default async function DashboardPage({
 
       <div className="space-y-6 p-6">
         {/* KPI row — borderless big numbers, hairline dividers */}
-        <div className="flex flex-wrap divide-x divide-y overflow-hidden rounded-xl border bg-card sm:divide-y-0">
+        <StaggerContainer className="flex flex-wrap divide-x divide-y overflow-hidden rounded-xl border bg-card sm:divide-y-0">
           {kpis.map((k) => (
-            <div key={k.label} className="min-w-[7.5rem] flex-1 px-5 py-4">
+            <StaggerItem key={k.label} className="min-w-[7.5rem] flex-1 px-5 py-4">
               <div className="text-sm text-muted-foreground">{k.label}</div>
               <div className="mt-1 text-3xl font-semibold tracking-tight">
                 {k.value}
               </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
 
         {/* Hero area chart */}
-        <Card>
+        <FadeInUp delay={0.15}><Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Leads over time</CardTitle>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -193,13 +194,16 @@ export default async function DashboardPage({
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card></FadeInUp>
 
         {/* Breakdown panels — Framer "Sources / Pages" style */}
+        <FadeIn delay={0.2}>
         <div className="grid gap-4 lg:grid-cols-2">
           <BreakdownList title="Where leads come from" items={sourceItems} />
           <BreakdownList title="Pipeline stages" items={stageItems} />
         </div>
+        </FadeIn>
+        <FadeIn delay={0.25}>
         <div className="grid gap-4 lg:grid-cols-2">
           <BreakdownList title="Services requested" items={serviceItems} />
           <BreakdownList
@@ -208,6 +212,8 @@ export default async function DashboardPage({
             empty="No ad-attributed leads yet — tag your ads to populate this."
           />
         </div>
+        </FadeIn>
+        <FadeIn delay={0.3}>
         <div className="grid gap-4 lg:grid-cols-2">
           <BreakdownList title="Geography" items={geoItems} />
           <BreakdownList
@@ -216,9 +222,10 @@ export default async function DashboardPage({
             empty="No device data yet — captured at booking once the form is live."
           />
         </div>
+        </FadeIn>
 
         {/* Recent activity */}
-        <Card>
+        <FadeIn delay={0.35}><Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Recent activity
@@ -246,7 +253,7 @@ export default async function DashboardPage({
               </Link>
             ))}
           </CardContent>
-        </Card>
+        </Card></FadeIn>
       </div>
     </div>
   );

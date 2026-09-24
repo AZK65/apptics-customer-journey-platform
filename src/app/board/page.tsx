@@ -1,8 +1,8 @@
 import { getCustomers } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
+import { FadeInUp } from "@/components/motion-wrappers";
 import { JourneySankey } from "@/components/journey-sankey";
 
-// Render per-request so live CRM data is always fresh.
 export const dynamic = "force-dynamic";
 
 export default async function BoardPage() {
@@ -16,7 +16,9 @@ export default async function BoardPage() {
       />
 
       <div className="p-6">
-        <JourneySankey customers={customers} />
+        <FadeInUp>
+          <JourneySankey customers={customers} />
+        </FadeInUp>
       </div>
     </div>
   );
