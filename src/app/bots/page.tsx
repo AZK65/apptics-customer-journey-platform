@@ -3,7 +3,7 @@ import { Radar, MessageSquare, CheckCircle2, CircleDashed, ChevronRight, Link2, 
 import { PageHeader } from "@/components/page-header";
 import { StaggerContainer, StaggerItem } from "@/components/motion-wrappers";
 import { Card, CardContent } from "@/components/ui/card";
-import { integrationConfig } from "@/lib/integrations/config";
+import { accountsStatus } from "@/lib/integrations/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -45,17 +45,10 @@ async function loadRedditSources() {
 }
 
 async function loadSalesBot() {
-  const { url, apiKey, enabled } = integrationConfig.salesBot;
-  if (!enabled) return { whatsapp: null, telegram: null };
   try {
-    const res = await fetch(`${url}/login/status`, {
-      headers: { "x-api-key": apiKey },
-      cache: "no-store",
-    });
-    if (!res.ok) return { whatsapp: null, telegram: null };
-    return await res.json();
+    return await accountsStatus();
   } catch {
-    return { whatsapp: null, telegram: null };
+    return null;
   }
 }
 
@@ -67,7 +60,7 @@ export default async function BotsPage() {
   ]);
 
   const waLinked = !!salesBot?.whatsapp?.connected;
-  const tgLinked = salesBot?.telegram?.status === "connected";
+  const tgLinked = !!salesBot?.telegram?.connected;
 
   const activeWatchers = (watchers as { chatId: string; queries: string[] }[]).filter(
     (w) => w.chatId && w.chatId !== "REPLACE_WITH_CHAT_ID",

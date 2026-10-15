@@ -6,13 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 
 type ChannelStatus = {
   connected?: boolean;
-  status?: string; // telegram: idle|starting|waiting|connected|error
+  status?: string; // starting|qr|password|checking|connected|idle|error|…
   me?: string | null;
   error?: string | null;
+  hint?: string | null; // telegram 2FA hint
   qr?: string | null; // data URL
 };
 
 type Status = {
+  source?: "local" | "sales-bot";
   whatsapp?: ChannelStatus;
   telegram?: ChannelStatus;
   error?: string;
@@ -45,6 +47,8 @@ function Panel({
   qr,
   errorText,
   busy,
+  waitingText,
+  body,
   children,
 }: {
   icon: typeof MessageSquare;
@@ -56,6 +60,8 @@ function Panel({
   qr?: string | null;
   errorText?: string | null;
   busy?: boolean;
+  waitingText?: string | null;
+  body?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -83,7 +89,9 @@ function Panel({
         </div>
 
         <div className="flex min-h-[248px] w-full items-center justify-center rounded-xl border bg-muted/30 p-3">
-          {connected ? (
+          {body ? (
+            body
+          ) : connected ? (
             <span className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--stage-won)" }}>
               <CheckCircle2 className="size-4" />
               Connected{meLabel ? ` as ${meLabel}` : ""}
@@ -94,6 +102,10 @@ function Panel({
           ) : busy ? (
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Generating QR…
+            </span>
+          ) : waitingText ? (
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> {waitingText}
             </span>
           ) : errorText ? (
             <span className="max-w-[240px] text-xs" style={{ color: "var(--stage-lost, #ef4444)" }}>
@@ -119,6 +131,8 @@ export function SalesAccountsManager() {
   const [tgBusy, setTgBusy] = useState(false);
   // Re-linking disconnects a live number, so it takes a deliberate second click.
   const [confirming, setConfirming] = useState<"whatsapp" | "telegram" | null>(null);
+  const [tgPassword, setTgPassword] = useState("");
+  const [tgPwSending, setTgPwSending] = useState(false);
 
   const poll = useCallback(async () => {
     try {
@@ -154,6 +168,23 @@ export function SalesAccountsManager() {
     } finally {
       // let the bot spin up a fresh QR before dropping the busy hint
       setTimeout(() => setBusy(false), 4000);
+    }
+  };
+
+  const submitTgPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tgPassword) return;
+    setTgPwSending(true);
+    try {
+      await fetch("/api/bots/accounts/relink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: "telegram", action: "password", password: tgPassword }),
+      });
+      setTgPassword("");
+      await poll();
+    } finally {
+      setTgPwSending(false);
     }
   };
 
@@ -205,19 +236,45 @@ export function SalesAccountsManager() {
   const wa = s?.whatsapp || {};
   const tg = s?.telegram || {};
   const waConnected = !!wa.connected;
-  const tgConnected = tg.status === "connected";
+  const tgConnected = !!tg.connected || tg.status === "connected";
+  const waiting = (c: ChannelStatus) =>
+    c.status === "starting" ? "Starting…" : c.status === "checking" ? "Signing in…" : null;
+
+  const tgPasswordForm =
+    tg.status === "password" ? (
+      <form onSubmit={submitTgPassword} className="w-full max-w-[260px] space-y-2 text-left">
+        <p className="text-sm font-medium">QR scanned — enter your Telegram 2FA password</p>
+        {tg.hint && <p className="text-xs text-muted-foreground">Hint: {tg.hint}</p>}
+        {tg.error && (
+          <p className="text-xs" style={{ color: "var(--stage-lost, #ef4444)" }}>
+            {tg.error}
+          </p>
+        )}
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={tgPassword}
+          onChange={(e) => setTgPassword(e.target.value)}
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+          placeholder="Cloud password"
+          autoFocus
+        />
+        <button
+          type="submit"
+          disabled={!tgPassword || tgPwSending}
+          className="w-full rounded-lg bg-foreground px-3 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {tgPwSending ? "Sending…" : "Sign in"}
+        </button>
+      </form>
+    ) : null;
 
   if (loadError) {
     return (
       <Card>
         <CardContent className="space-y-2 py-6 text-sm">
-          <p className="font-medium">Can’t reach the sales bot.</p>
+          <p className="font-medium">Can’t load account status.</p>
           <p className="text-muted-foreground">{loadError}</p>
-          <p className="text-muted-foreground">
-            Set <code className="font-mono">SALES_BOT_URL</code> and{" "}
-            <code className="font-mono">SALES_BOT_API_KEY</code> on this service’s
-            environment, then reload.
-          </p>
         </CardContent>
       </Card>
     );
@@ -231,7 +288,10 @@ export function SalesAccountsManager() {
         color="#22c55e"
         steps="WhatsApp → Settings → Linked devices → Link a device"
         connected={waConnected}
+        meLabel={wa.me ? `+${wa.me.replace(/^\+/, "")}` : null}
         qr={wa.qr}
+        errorText={wa.error}
+        waitingText={waiting(wa)}
         busy={waBusy && !wa.qr}
       >
         {relinkControl("whatsapp", waConnected, waBusy)}
@@ -245,7 +305,9 @@ export function SalesAccountsManager() {
         connected={tgConnected}
         meLabel={tg.me}
         qr={tg.qr}
-        errorText={tg.status === "error" ? tg.error : null}
+        errorText={tg.error}
+        waitingText={waiting(tg)}
+        body={tgPasswordForm}
         busy={tgBusy && !tg.qr}
       >
         {relinkControl("telegram", tgConnected, tgBusy)}

@@ -15,6 +15,12 @@ const procs = [
 function start(p, attempt = 0) {
   const child = spawn(p.cmd, p.args, { stdio: "inherit", env: process.env });
   child.on("exit", (code) => {
+    // Exit 0 = deliberate restart (e.g. a worker re-linking) → come straight back.
+    if (code === 0 && p.name !== "web") {
+      console.log(`[boot] ${p.name} restarting`);
+      setTimeout(() => start(p, 0), 1_000);
+      return;
+    }
     // Don't crash-loop hard; back off up to 30s.
     const delay = Math.min(30_000, 3_000 * (attempt + 1));
     console.error(`[boot] ${p.name} exited (code ${code}); restarting in ${delay / 1000}s`);

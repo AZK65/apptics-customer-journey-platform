@@ -29,24 +29,27 @@ META_ACCESS_TOKEN=...
 META_AD_ACCOUNT_ID=act_728849906940968
 META_API_VERSION=v21.0
 
-# Telegram session (no QR — reused)
+# Telegram app credentials (my.telegram.org → API development tools).
+# The account itself is linked by QR from the dashboard (step 3).
 TELEGRAM_API_ID=...
 TELEGRAM_API_HASH=...
-TELEGRAM_SESSION=...
-TELEGRAM_PHONE=...
 
 # Cal.com webhook (set after you create the webhook in step 4)
 CAL_WEBHOOK_SECRET=
 ```
 
-## 3. Link WhatsApp (one time)
-WhatsApp needs a QR scan on the host:
-1. After deploy, open the service **Logs**.
-2. The WhatsApp worker prints a QR (ASCII). On the **Apptics WhatsApp number**:
-   WhatsApp → **Linked Devices → Link a Device** → scan it.
-3. Logs should then show `[wa] connected as …`. The session persists on the `/data` volume — scan only once.
+## 3. Link WhatsApp + Telegram (one time)
+Open the dashboard → **Bots → Sales Bot Accounts**. Each panel shows a live QR:
+- **WhatsApp:** on the Apptics number → Settings → **Linked Devices → Link a Device** → scan.
+- **Telegram:** on the phone → Settings → **Devices → Link Desktop Device** → scan. If the
+  account has a 2FA cloud password, the panel asks for it after the scan.
 
-(Telegram needs no scan — it reuses `TELEGRAM_SESSION`.)
+Sessions persist on the `/data` volume (`.wwebjs-auth/`, `telegram-session.txt`), so this is
+once. **Re-link with new number** on either panel logs out the current account and shows a
+fresh QR.
+
+(Without `SALES_BOT_URL`/`SALES_BOT_API_KEY` the page drives the workers in this container;
+with them it proxies to the external apptics-whatsapp sales bot instead.)
 
 ## 4. Point Cal.com at the app
 Cal.com → **Settings → Developer → Webhooks → New**:

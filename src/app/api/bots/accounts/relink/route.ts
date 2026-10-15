@@ -1,36 +1,43 @@
 import { NextResponse } from "next/server";
 import { integrationConfig } from "@/lib/integrations/config";
+import { sendLocalCommand } from "@/lib/integrations/accounts";
 
 export const dynamic = "force-dynamic";
 
-// Trigger a re-link / reset on the sales bot.
-//   POST { target: "whatsapp" }                                    → wipes WA session, new QR
-//   POST { target: "telegram", password?: string }                 → starts Telegram QR login
-//   POST { target: "telegram", action: "reset" }                   → logs out + clears Telegram
+// Trigger a re-link on WhatsApp / Telegram.
+//   POST { target: "whatsapp" }                                → wipes WA session, new QR
+//   POST { target: "telegram" }                                → logs out + new Telegram QR
+//   POST { target: "telegram", action: "password", password }  → submits the 2FA password
 export async function POST(req: Request) {
-  const { url, apiKey, enabled } = integrationConfig.salesBot;
-  if (!enabled) {
-    return NextResponse.json(
-      { error: "sales bot not configured — set SALES_BOT_URL + SALES_BOT_API_KEY" },
-      { status: 503 },
-    );
-  }
   let body: { target?: string; password?: string; action?: string } = {};
   try {
     body = await req.json();
   } catch {}
   const target = body.target;
   const action = body.action || "relink";
-  let path: string | null = null;
-  if (target === "whatsapp") path = "/relink-whatsapp";
-  else if (target === "telegram")
-    path = action === "reset" ? "/reset-telegram" : "/relink-telegram";
-  if (!path) {
+  if (target !== "whatsapp" && target !== "telegram") {
     return NextResponse.json(
       { error: "target must be 'whatsapp' or 'telegram'" },
       { status: 400 },
     );
   }
+
+  if (!integrationConfig.salesBot.enabled) {
+    if (action === "password") {
+      if (target !== "telegram" || !body.password) {
+        return NextResponse.json({ error: "password required" }, { status: 400 });
+      }
+      sendLocalCommand("telegram", { action: "password", password: body.password });
+    } else {
+      sendLocalCommand(target, { action: "relink" });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // External sales bot.
+  const { url, apiKey } = integrationConfig.salesBot;
+  let path = "/relink-whatsapp";
+  if (target === "telegram") path = action === "reset" ? "/reset-telegram" : "/relink-telegram";
   try {
     const res = await fetch(`${url}${path}`, {
       method: "POST",

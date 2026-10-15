@@ -7,6 +7,8 @@
 //
 // Run:  pnpm whatsapp:link      (scan the QR with the Apptics number)
 // The session persists in whatsapp-worker/.wwebjs-auth (scan only once).
+// The dashboard (Bots → Sales Bot Accounts) shows the QR and can trigger a
+// re-link by writing whatsapp-control.json next to the store.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const fs = require("fs");
@@ -20,8 +22,9 @@ const DIR = __dirname;
 const STORE = process.env.WHATSAPP_DATA_PATH || path.join(DIR, "store.json");
 const AUTH = process.env.WWEBJS_AUTH_PATH || path.join(DIR, ".wwebjs-auth");
 const MSG_LIMIT = Number(process.env.WA_MSG_LIMIT || 50);
+const CONTROL = path.join(path.dirname(STORE), "whatsapp-control.json");
 
-let state = { status: "starting", qr: null, me: null, updatedAt: null, groups: [] };
+let state = { status: "starting", qr: null, me: null, error: null, updatedAt: null, groups: [] };
 
 function writeStore(patch) {
   state = { ...state, ...patch, updatedAt: new Date().toISOString() };
@@ -44,24 +47,67 @@ client.on("qr", (qr) => {
   console.log("\nScan this QR with the Apptics WhatsApp number:");
   console.log("  WhatsApp → Settings → Linked Devices → Link a Device\n");
   qrcodeTerminal.generate(qr, { small: true });
-  writeStore({ status: "qr", qr });
+  writeStore({ status: "qr", qr, error: null });
 });
 
 client.on("authenticated", () => console.log("[wa] authenticated"));
-client.on("auth_failure", (m) => console.error("[wa] auth failure:", m));
+client.on("auth_failure", (m) => {
+  console.error("[wa] auth failure:", m);
+  writeStore({ status: "error", qr: null, error: `Auth failed: ${m}. Click re-link.` });
+});
 
 client.on("ready", async () => {
   const me = client.info?.wid?.user || null;
   console.log(`[wa] connected as ${me}. Syncing groups…`);
-  writeStore({ status: "connected", qr: null, me });
+  writeStore({ status: "connected", qr: null, me, error: null });
   await syncAll();
   console.log(`[wa] synced ${state.groups.length} groups → ${STORE}`);
 });
 
+// Logged out from the phone (or kicked) → wipe the session and restart so a
+// fresh QR shows up on the dashboard.
 client.on("disconnected", (r) => {
   console.warn("[wa] disconnected:", r);
-  writeStore({ status: "disconnected" });
+  writeStore({ status: "disconnected", qr: null, me: null });
+  restartFresh();
 });
+
+// Dashboard commands. The file is consumed (deleted) as soon as it's read.
+let restarting = false;
+setInterval(() => {
+  let cmd;
+  try {
+    cmd = JSON.parse(fs.readFileSync(CONTROL, "utf8"));
+    fs.rmSync(CONTROL, { force: true });
+  } catch {
+    return;
+  }
+  if (cmd.action === "relink") {
+    console.log("[wa] re-link requested from dashboard");
+    relink().catch(() => restartFresh());
+  }
+}, 1500);
+
+async function relink() {
+  if (restarting) return;
+  const wasConnected = state.status === "connected";
+  writeStore({ status: "starting", qr: null, me: null, groups: [] });
+  if (wasConnected) {
+    // Unlink this device from the phone; don't hang forever if WA is unresponsive.
+    await Promise.race([client.logout(), new Promise((r) => setTimeout(r, 10_000))]).catch(() => {});
+  }
+  restartFresh();
+}
+
+// Drop the saved session and exit; boot.mjs restarts the worker → new QR.
+async function restartFresh() {
+  if (restarting) return;
+  restarting = true;
+  await Promise.race([client.destroy(), new Promise((r) => setTimeout(r, 10_000))]).catch(() => {});
+  fs.rmSync(AUTH, { recursive: true, force: true });
+  writeStore({ status: "starting", qr: null, me: null, groups: [] });
+  process.exit(0);
+}
 
 // Re-sync (debounced) whenever a message arrives in any chat.
 let timer = null;
@@ -115,5 +161,5 @@ console.log("[wa] starting worker… (store:", STORE + ")");
 writeStore({ status: "starting" });
 client.initialize().catch((e) => {
   console.error("[wa] init failed:", e);
-  writeStore({ status: "error" });
+  writeStore({ status: "error", error: `WhatsApp failed to start: ${e && e.message}` });
 });
