@@ -157,7 +157,24 @@ async function syncAll() {
   writeStore({ groups });
 }
 
+// Chromium leaves Singleton* lock files in the profile on the volume; after a
+// redeploy (new container hostname) they make it refuse to start. Clear them.
+function clearChromiumLocks(dir) {
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const e of entries) {
+    const p = path.join(dir, e.name);
+    if (e.name.startsWith("Singleton")) fs.rmSync(p, { force: true });
+    else if (e.isDirectory() && !e.isSymbolicLink()) clearChromiumLocks(p);
+  }
+}
+
 console.log("[wa] starting worker… (store:", STORE + ")");
+clearChromiumLocks(AUTH);
 writeStore({ status: "starting" });
 client.initialize().catch((e) => {
   console.error("[wa] init failed:", e);
